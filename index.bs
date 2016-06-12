@@ -1,6 +1,6 @@
 <pre class="metadata">
 Shortname: webvr
-Title: WebVR
+Title: WebVR （日本語訳 私家版）
 Status: ED
 ED: https://w3c.github.io/webvr/
 Repository: w3c/webvr
@@ -14,7 +14,8 @@ Editor: Vladimir Vukicevic, Mozilla https://mozilla.org/, vladimir@mozilla.com
 Editor: Brandon Jones, Google http://google.com/, bajones@google.com
 Editor: Kearwood Gilbert, Mozilla https://mozilla.org/, kgilbert@mozilla.com
 Editor: Chris Van Wiemeersch, Mozilla https://mozilla.org/, cvan@mozilla.com
-Abstract: This specification describes support for accessing virtual reality (VR) devices, including sensors and head-mounted displays on the Web.
+Abstract: 本仕様は，センサーやヘッドマウントディスプレイを含むバーチャルリアリティ(VR)デバイスへWebでアクセスするためのサポートを説明しています．<br />【日本語の文書についての前書き】<br />この文書は「<a href="https://w3c.github.io/webvr/">WebVR（Editor’s Draft, 1 June 2016）</a>」の日本語訳です。日本語訳は参考情報であって、公式な文書ではありません。これらの翻訳には誤りが含まれる可能性もあります． 正式なものはあくまでも英語版ですので， この点をご理解頂いた上でご利用下さい．
+<!-- This specification describes support for accessing virtual reality (VR) devices, including sensors and head-mounted displays on the Web. -->
 </pre>
 
 <pre class="anchors">
@@ -30,180 +31,319 @@ urlPrefix: https://www.w3.org/TR/html51/webappapis.html
     type: dfn; text: window.requestAnimationFrame
 </pre>
 
-
 # Introduction # {#intro}
 
+バーチャルリアリティ(Virtual Reality)アプリケーションを動作させるハードウェアは，満足できる体験を提供するために，高精度で低レイテンシ（遅延）のインターフェイスを必要とします．
+デバイスオリエンテーションイベントのような他のインターフェイスをVR入力に代用することも可能ですが，その場合，そのインターフェイスの元々の意図を薄めてしまいますし，しばしば高品質VRに必要な精度を提供していません．
+WebVR APIは、開発者が魅力的で快適なVR体験を構築できるように，VRハードウェアへVR専用のインターフェイスを提供します．
+　
+<!--
 Hardware that enables Virtual Reality applications requires high-precision, low-latency interfaces to deliver an acceptable experience.
 Other interfaces, such as device orientation events, can be repurposed to surface VR input but doing so dilutes the interface's original
 intent and often does not provide the precision necessary for high-quality VR. The WebVR API provides purpose-built interfaces
 to VR hardware to allow developers to build compelling, comfortable VR experiences.
-
+-->
 
 # DOM Interfaces # {#interfaces}
 
+
+このセクションでは，上述の機能へ実行時アクセスをサポートするため，DOMに追加されるインターフェイスと機能を説明します．
+
+<!--
 This section describes the interfaces and functionality added to the DOM to support runtime access to the functionality described above.
+ -->
 
 
 ## VRDisplay ## {#interface-vrdisplay}
 
+{{VRDisplay}} インターフェイスは，このAPIによってサポートされるすべてのVRデバイスのベースとなるものです． このインターフェイスはデバイスIDやデバイスの説明のような一般的な情報を含んでいます．
+<!--
 The {{VRDisplay}} interface forms the base of all VR devices supported by this API. It includes generic information such as device IDs and descriptions.
+ -->
 
-<pre class="idl">
-interface VRDisplay : EventTarget {
-  readonly attribute boolean isConnected;
-  readonly attribute boolean isPresenting;
+ <pre class="idl">
+ interface VRDisplay : EventTarget {
+   readonly attribute boolean isConnected;
+   readonly attribute boolean isPresenting;
 
-  /**
-   * Dictionary of capabilities describing the VRDisplay.
-   */
-  [Constant] readonly attribute VRDisplayCapabilities capabilities;
+   /**
+    <!--
+    * Dictionary of capabilities describing the VRDisplay.
+    -->
+    * VRDisplayのキャパビリティのディクショナリ
+    */
+   [Constant] readonly attribute VRDisplayCapabilities capabilities;
 
-  /**
-   * If this VRDisplay supports room-scale experiences, the optional
-   * stage attribute contains details on the room-scale parameters.
-   */
-  readonly attribute VRStageParameters? stageParameters;
+   /**
+    * このVRDisplayがルームスケール体験をサポートしている場合，
+    * 選択可能(Optional)なステージ属性はルームスケールパラメータの詳細を含みます．
+    <!--
+    * If this VRDisplay supports room-scale experiences, the optional
+    * stage attribute contains details on the room-scale parameters.
+    -->
+    */
+   readonly attribute VRStageParameters? stageParameters;
 
-  /* Return the current VREyeParameters for the given eye. */
-  VREyeParameters getEyeParameters(VREye whichEye);
+   /* 指定した眼の現在の VREyeParameters を返します． */
+<!--
+   /* Return the current VREyeParameters for the given eye. */
+-->
+   VREyeParameters getEyeParameters(VREye whichEye);
 
-  /**
-   * An identifier for this distinct VRDisplay. Used as an
-   * association point in the Gamepad API.
-   */
-  [Constant] readonly attribute unsigned long displayId;
+   /**
+    * この VRDisplay 固有の識別子．Gamepad API との関連付けに用います．
+<!--
+    * An identifier for this distinct VRDisplay. Used as an
+    * association point in the Gamepad API.
+-->
+    */
+   [Constant] readonly attribute unsigned long displayId;
 
-  /**
-   * A display name, a user-readable name identifying it.
-   */
-  [Constant] readonly attribute DOMString displayName;
+   /**
+    * 表示名，ユーザがデバイスを識別するための可読な名前．
+<!--
+    * A display name, a user-readable name identifying it.
+-->
+    */
+   [Constant] readonly attribute DOMString displayName;
 
-  /**
-   * Return a VRPose containing the future predicted pose of the VRDisplay
-   * when the current frame will be presented. The value returned will not
-   * change until JavaScript has returned control to the browser.
-   *
-   * The VRPose will contain the position, orientation, velocity,
-   * and acceleration of each of these properties.
-   */
-  [NewObject] VRPose getPose();
+   /**
+    * 現在のフレームが表示される時点における VRDisplay の未来推定ポーズを含んだ VRPose を返します．
+    * この戻り値は，JavaScriptがブラウザへ制御を返すまで変更されないでしょう．
+    *
+    * VRPose は位置，向き，速度，加速度をそれぞれプロパティとして持つことができます．
+ <!--
+    * Return a VRPose containing the future predicted pose of the VRDisplay
+    * when the current frame will be presented. The value returned will not
+    * change until JavaScript has returned control to the browser.
+    *
+    * The VRPose will contain the position, orientation, velocity,
+    * and acceleration of each of these properties.
+  -->
+    */
+   [NewObject] VRPose getPose();
 
-  /**
-   * Return the current instantaneous pose of the VRDisplay, with no
-   * prediction applied.
-   */
-  [NewObject] VRPose getImmediatePose();
+   /**
+    * VRDisplay の現時点のポーズを返します．これには予測は適用されない状態の値です．
+    <!--
+    * Return the current instantaneous pose of the VRDisplay, with no
+    * prediction applied.
+    -->
+    */
+   [NewObject] VRPose getImmediatePose();
 
-  /**
-   * Reset the pose for this display, treating its current position and
-   * orientation as the "origin/zero" values. VRPose.position,
-   * VRPose.orientation, and VRStageParameters.sittingToStandingTransform may be
-   * updated when calling resetPose(). This should be called in only
-   * sitting-space experiences.
-   */
-  void resetPose();
+   /**
+    * このディスプレイのポーズをリセットして，現在の位置と向きを"原点/ゼロ"値として扱います．
+    * VRPose.position, VRPose.orientation, そして，
+    * VRStageParameters.sittingToStandingTransform はresetPose() を呼出した時に
+    * 更新されるでしょう． このメソッドは座位状態の体験中だけで呼出されるべきです．
+<!--
+    * Reset the pose for this display, treating its current position and
+    * orientation as the "origin/zero" values. VRPose.position,
+    * VRPose.orientation, and VRStageParameters.sittingToStandingTransform may be
+    * updated when calling resetPose(). This should be called in only
+    * sitting-space experiences.
+    -->
+    */
+   void resetPose();
 
-  /**
-   * z-depth defining the near plane of the eye view frustum
-   * enables mapping of values in the render target depth
-   * attachment to scene coordinates. Initially set to 0.01.
-   */
-  attribute double depthNear;
+   /**
+    * 視錐台のnear平面を定義する z-depth で，シーンの座標系に付随させる
+    * レンダーターゲットの深度値のマッピングに利用できます．
+    * 初期値は 0.01 です．
+<!--
+    * z-depth defining the near plane of the eye view frustum
+    * enables mapping of values in the render target depth
+    * attachment to scene coordinates. Initially set to 0.01.
+    -->
+    */
+   attribute double depthNear;
 
-  /**
-   * z-depth defining the far plane of the eye view frustum
-   * enables mapping of values in the render target depth
-   * attachment to scene coordinates. Initially set to 10000.0.
-   */
-  attribute double depthFar;
+   /**
+   * 視錐台のfar平面を定義する z-depth で，シーンの座標系に付随させる
+   * レンダーターゲットの深度値のマッピングに利用できます．
+   * 初期値は 10000.0 です．
+   <!--
+    * z-depth defining the far plane of the eye view frustum
+    * enables mapping of values in the render target depth
+    * attachment to scene coordinates. Initially set to 10000.0.
+    -->
+    */
+   attribute double depthFar;
 
-  /**
-   * The callback passed to `requestAnimationFrame` will be called
-   * any time a new frame should be rendered. When the VRDisplay is
-   * presenting the callback will be called at the native refresh
-   * rate of the HMD. When not presenting this function acts
-   * identically to how window.requestAnimationFrame acts. Content should
-   * make no assumptions of frame rate or vsync behavior as the HMD runs
-   * asynchronously from other displays and at differing refresh rates.
-   */
-  [Throws] long requestAnimationFrame(FrameRequestCallback callback);
+   /**
+    * `requestAnimationFrame` へ渡されるコールバックで，新しいフレームが
+    * 描画されるタイミングで呼び出されます．VRDisplay が表示されているときは，
+    * コールバックは，そのHMDのネイティブなリフレッシュレートで呼びだされます．
+    * もし VRDisplay に表示されていない場合は，この関数は window.requestAnimationFrame
+    * の動きと全く同じ動作をします．コンテンツは特定のフレームレートや垂直同期（vsync）の振る舞いを Content should
+    * 仮定してはいけません．HMDは他のディスプレイと非同期に動作し，リフレッシュレートは異なります．
+    <!--
+    * The callback passed to `requestAnimationFrame` will be called
+    * any time a new frame should be rendered. When the VRDisplay is
+    * presenting the callback will be called at the native refresh
+    * rate of the HMD. When not presenting this function acts
+    * identically to how window.requestAnimationFrame acts. Content should
+    * make no assumptions of frame rate or vsync behavior as the HMD runs
+    * asynchronously from other displays and at differing refresh rates.
+    -->
+    */
+   [Throws] long requestAnimationFrame(FrameRequestCallback callback);
 
-  /**
-   * Passing the value returned by `requestAnimationFrame` to
-   * `cancelAnimationFrame` will unregister the callback.
-   */
-  [Throws] void cancelAnimationFrame(long handle);
+   /**
+    * `requestAnimationFrame`から返される値が，
+    * `cancelAnimationFrame` へ渡されて，コールバックの登録解除を行います．
+    <!--
+    * Passing the value returned by `requestAnimationFrame` to
+    * `cancelAnimationFrame` will unregister the callback.
+    -->
+    */
+   [Throws] void cancelAnimationFrame(long handle);
 
-  /**
-   * Begin presenting to the VRDisplay. Must be called in response to a user gesture.
-   * Repeat calls while already presenting will update the VRLayers being displayed.
-   */
-  Promise&lt;void&gt; requestPresent(sequence&lt;VRLayer&gt; layers);
+   /**
+    * VRDisplayへの表示を開始します．ユーザ操作への応答として呼び出してください．
+    * 表示中に繰り返し呼びだされた場合は，表示されるVRLayerをアップデートします．
+<!--
+    * Begin presenting to the VRDisplay. Must be called in response to a user gesture.
+    * Repeat calls while already presenting will update the VRLayers being displayed.
+    -->
+    */
+   Promise&lt;void&gt; requestPresent(sequence&lt;VRLayer&gt; layers);
 
-  /**
-   * Stops presenting to the VRDisplay.
-   */
-  Promise&lt;void&gt; exitPresent();
+   /**
+    * VRDisplayへの表示を停止します．
+<!--
+    * Stops presenting to the VRDisplay.
+    -->
+    */
+   Promise&lt;void&gt; exitPresent();
 
-  /**
-   * Get the layers currently being presented.
-   */
-  sequence&lt;VRLayer&gt; getLayers();
+   /**
+    * 現在表示されているレイヤを取得します．
+    <!--
+    * Get the layers currently being presented.
+    -->
+    */
+   sequence&lt;VRLayer&gt; getLayers();
 
-  /**
-   * The VRLayer provided to the VRDisplay will be captured and presented
-   * in the HMD. Calling this function has the same effect on the source
-   * canvas as any other operation that uses its source image, and canvases
-   * created without preserveDrawingBuffer set to true will be cleared.
-   */
-  void submitFrame(optional VRPose pose);
-};
+   /**
+    * VRDisplay へ提供される VRLayer はキャプチャされて，HMDの中に表示されます．
+    * この関数を呼び出すことは，ソースキャンバス上でソースイメージを使うのと同じ効果を持ち，
+    * preserveDrawingBuffer をtrueに設定せずに作成されたcanvasはクリアされます．
+<!--
+    * The VRLayer provided to the VRDisplay will be captured and presented
+    * in the HMD. Calling this function has the same effect on the source
+    * canvas as any other operation that uses its source image, and canvases
+    * created without preserveDrawingBuffer set to true will be cleared.
+    -->
+    */
+   void submitFrame(optional VRPose pose);
+ };
 </pre>
 
 ### Attributes ### {#vrdisplay-attributes}
 
 <dfn attribute for="VRDisplay">isConnected</dfn>
+{{isConnected}} 属性は必ず {{VRDisplay}} の接続状態を返します．
+<!--
 The {{isConnected}} attribute MUST return the {{VRDisplay}}'s connected state.
+-->
 
 <dfn attribute for="VRDisplay">isPresenting</dfn>
+{{isPresenting}} 属性は必ず {{VRDisplay}} の表示状態を返します．
+<!--
 The {{isPresenting}} attribute MUST return the {{VRDisplay}}'s presentation state.
+-->
 
 <dfn attribute for="VRDisplay">capabilities</dfn>
+{{capabilities}} 属性は，必ず {{VRDisplay}} の {{VRDisplayCapabilities}} オブジェクトを返します．
+ {{VRDisplayCapabilities}} はその {{VRDisplay}} で利用可能な機能のディクショナリです．
+<!--
 The {{capabilities}} attribute MUST return the {{VRDisplay}}'s {{VRDisplayCapabilities}} object, a dictionary of capabilities describing the {{VRDisplay}}.
+-->
 
 <dfn method for="VRDisplay">getEyeParameters()</dfn>
+指定した眼の現在の {{VREyeParameters}} を返します．アイパラメータは *おそらく* 外部要因（例えばハードウェア側でIPD調整するなど）によっていつでも変化される可能性があります．
+結果的に，これらの値はキャッシュするのではなくフレーム毎に取得することが推奨されます．
+<!--
 Returns the current {{VREyeParameters}} for the given eye. The eye parameters MAY change at any time due to external factors, such as the user changing the IPD with hardware controls. As a result, it is recommended that these values be queried for each frame rather than cached.
+-->
 
 <dfn method for="VRDisplay">getPose()</dfn>
+{{VRDisplay}} の位置，向き，加速度を保持する {{VRPose}} を返します．
+この情報を，シーンの次のフレームをレンダリングする時に使わなければなりません．
+ユーザエージェントは，予測技術を用いて，次のフレームがユーザに表示されるタイミングのポーズを推定する場合があります．
+取得したポーズは，JavaScriptがブラウザへ制御を返すまでの間に変更してはいけません．
+<!--
 Returns a {{VRPose}} describing the position, orientation, and acceleration of the {{VRDisplay}} that should be used when rendering the next frame of a scene. The User Agent MAY optionally use predictive techniques to estimate what the pose will be at the time that the next frame will be displayed to the user. The pose returned MUST NOT change until JavaScript has returned control to the browser.
+-->
 
 <dfn method for="VRDisplay">getImmediatePose()</dfn>
+この呼出しが実行された時点の {{VRDisplay}} の位置，向き，加速度を保持する {{VRPose}} を返します．
+ユーザエージェントは，ポーズを構築時に予測技術を使用してはいけません
+<!--
 Returns a {{VRPose}} describing the position, orientation, and acceleration of the {{VRDisplay}} at the time when the call was made. The User Agent SHOULD NOT use predictive techniques when constructing the pose.
+-->
 
 <dfn method for="VRDisplay">resetPose()</dfn>
+現在の位置と向きを"原点/ゼロ"として扱うことで {{VRDisplay}} のポーズをリセットします．
+{{getPose()}} で得られた予測ポーズと {{getImmediatePose()}} は，最後に {{resetPose()}} が呼び出された時の位置からの相対的な位置を持ち，
+最後に {{resetPose()}} が呼び出された時のディスプレイのヨー(yaw)を前方向として扱います．
+{{VRDisplay}} のロールとピッチは， {{resetPose()}} の呼び出しでは変化せず，重力加速度方向に対する相対的な値になります．
+{{resetPose()}} を呼び出すことで， {{VRStageParameters}} の {{sittingToStandingTransform}} 行列が変化する場合があります．
+<!--
 Reset the pose for the {{VRDisplay}}, treating its current position and orientation as the "origin/zero" values. Future poses returned from {{getPose()}} and {{getImmediatePose()}} will describe positions relative to the {{VRDisplay}}'s position when {{resetPose()}} was last called and will treat the display's yaw when {{resetPose()}} was last called as the forward orientation. The {{VRDisplay}}'s reported roll and pitch do not change when {{resetPose()}} is called as they are relative to gravity. Calling {{resetPose()}} may change the {{sittingToStandingTransform}} matrix of the {{VRStageParameters}}.
+-->
 
 <dfn method for="VRDisplay">requestAnimationFrame()</dfn>
+ {{VRDisplay}} に表示されていない場合，<a href="https://www.w3.org/TR/html51/webappapis.html#animation-frames">window.requestAnimationFrame</a> と機能的に等価です． {{VRDisplay}} に表示されている場合は，このコールバックは {{VRDisplay}}のネイティブなリフレッシュレートに従って呼び出されます．
+<!--
 Functionally equivalent to <a href="https://www.w3.org/TR/html51/webappapis.html#animation-frames">window.requestAnimationFrame</a> when the {{VRDisplay}} is not presenting. When the {{VRDisplay}} is presenting the callback is called at the native refresh rate of the {{VRDisplay}}.
+-->
 
 <dfn method for="VRDisplay">cancelAnimationFrame()</dfn>
+{{requestAnimationFrame()}} の返り値を渡すことで，コールバック登録を解除できます．
+<!--
 Passing the value returned by {{requestAnimationFrame()}} to will unregister the callback.
+-->
 
 <dfn method for="VRDisplay">requestPresent()</dfn>
+{{VRDisplay}} 上の指定した {{VRLayer}} 配列のコンテンツの表示を開始し，表示が開始されたら値の設定されたpromiseを返します．
+{{canPresent}} が false の場合は必ずpromiseをリジェクトしなければなりません．
+{{VRLayer}} 配列が {{maxLayers}} 以上の要素を含んでいる場合は必ずpromiseをリジェクトしなければなりません．
+ユーザエージェントが，その他の理由でpromiseをリジェクトする可能性があります．
+{{requestPresent()}} の呼出し時に {{VRDisplay}} が既に表示されていたら，その {{VRDisplay}} に表示中の {{VRLayer}} リストを更新するべきです．
+{{VRDisplay}} の表示中に{{requestPresent()}} がリジェクトされた場合は，その {{VRDisplay}} の表示を終了しなければなりません．
+<!--
 Begins presenting the contents of the specified {{VRLayer}} array on the {{VRDisplay}} and fulfills the returned promise when presentation has begun. If {{canPresent}} is false the promise MUST be rejected. If the {{VRLayer}} array contains more than {{maxLayers}} elements the promise MUST be rejected. The user agent MAY reject the promise for any other reason. If the {{VRDisplay}} is already presenting when {{requestPresent()}} is called the {{VRDisplay}} SHOULD update the {{VRLayer}} list being presented. If a call to {{requestPresent()}} is rejected while the {{VRDisplay}} is already presenting the {{VRDisplay}} MUST end presentation.
+-->
 
 <dfn method for="VRDisplay">exitPresent()</dfn>
+{{VRDisplay}} の表示を終了し，完全に終了した時に値の入った promise が返されます．
+{{VRDisplay}} が表示されていない場合は，promise はリジェクトされなければなりません．
+<!--
 Ends presentation to the {{VRDisplay}} and fulfills the returned promise when fully exited. If the {{VRDisplay}} is not presenting the promise MUST be rejected.
+-->
 
 <dfn method for="VRDisplay">getLayers()</dfn>
+現在表示中の {{VRLayer}} 配列を返します． {{VRDisplay}} が表示されていない場合は空の配列を返さなければなりません． {{VRDisplay}} が表示されている場合は，最後に {{requestPresent()}} へ渡された {{VRLayer}} を含む配列を返さなければなりません．
+<!--
 Returns an array with the {{VRLayer}} currently being presented. MUST return an empty array if the {{VRDisplay}} is not currently presenting. If the {{VRDisplay}} is presenting MUST return an array containing the {{VRLayer}}s last passed to {{requestPresent()}}.
+-->
 
 <dfn method for="VRDisplay">submitFrame()</dfn>
+現在の表示されている {{VRLayer}} の状態をキャプチャし，それを {{VRDisplay}} へ描画します．オプションとして， {{VRLayer}} コンテンツをレンダリングするのに用いるポーズを指定する {{VRPose}} を提供することができます．ユーザエージェントが知覚的な遅延を改善するためにそのポーズをレイヤーコンテンツ操作に使う場合があります(MAY)．
+もし {{VRPose}} が提供されない場合は， {{getPose}} で取得された最後のポーズが使用されます．
+<!--
 Captures the current state of the {{VRLayer}} currently being presented and displays it on the {{VRDisplay}}. Optionally a {{VRPose}} can be provided to describe the pose used to render the {{VRLayer}} contents, which MAY be used by the user agent to manipulate the layer contents to improve perceived latency. If no {{VRPose}} is provided the last pose returned by {{getPose()}} will be used.
+-->
 
 ## VRLayer ## {#interface-vrlayer}
 
+{{VRLayer}} インターフェイスは {{VRDisplay}} に提供され，HMDへ表示されます．
+<!--
 The {{VRLayer}} interface is provided to a {{VRDisplay}} and presented in the HMD.
+-->
 
 <pre class="idl" id="vrlayer-dictionary">
 typedef (HTMLCanvasElement or
@@ -220,18 +360,30 @@ dictionary VRLayer {
 ### Attributes ### {#vrlayer-attributes}
 
 <dfn attribute for="VRLayer">source</dfn>
+{{source}} 属性は，{{VRDisplay}}.{{submitFrame()}} が呼び出された時に {{VRDisplay}} に表示されるコンテンツとなる canvas を定義します．
+<!--
 The {{source}} attribute defines the canvas whose contents will be presented by the {{VRDisplay}} when {{VRDisplay}}.{{submitFrame()}} is called.
+-->
 
 <dfn attribute for="VRLayer">leftBounds</dfn>
+{{leftBounds}} 属性は，眼に表示する {{source}} canvasのテクスチャ境界を決定するUV空間における4つの値を含んでいます: <code>[0]</code> 範囲 (0.0 - 1.0) の左オフセット; <code>[1]</code> 範囲 (0.0 - 1.0) の上オフセット; <code>[2]</code> 範囲 (0.0 - 1.0) の幅; <code>[3]</code> 範囲 (0.0 - 1.0) の高さ． {{leftBounds}} のデフォルト値は <code>[0.0, 0.0, 0.5, 1.0]</code> でなければなりません(MUST)．
+<!--
 The {{leftBounds}} attribute contains four values defining the texture bounds within the {{source}} canvas to present to the eye in UV space: <code>[0]</code> left offset of the bounds (0.0 - 1.0); <code>[1]</code> top offset of the bounds (0.0 - 1.0); <code>[2]</code> width of the bounds (0.0 - 1.0); <code>[3]</code> height of the bounds (0.0 - 1.0). The {{leftBounds}} MUST default to <code>[0.0, 0.0, 0.5, 1.0]</code>.
+-->
 
 <dfn attribute for="VRLayer">rightBounds</dfn>
+{{leftBounds}} 属性は，眼に表示する {{source}} canvasのテクスチャ境界矩形を決定するUV空間における4つの値を含んでいます: <code>[0]</code> 範囲 (0.0 - 1.0) の左オフセット; <code>[1]</code> 範囲 (0.0 - 1.0) の上オフセット; <code>[2]</code> 範囲 (0.0 - 1.0) の幅; <code>[3]</code> 範囲 (0.0 - 1.0) の高さ． {{rightBounds}} のデフォルト値は <code>[0.5, 0.0, 0.5, 1.0]</code> でなければなりません(MUST)．
+<!--
 The {{rightBounds}} attribute contains four values defining the texture bounds rectangle within the {{source}} canvas to present to the eye in UV space: <code>[0]</code> left offset of the bounds (0.0 - 1.0); <code>[1]</code> top offset of the bounds (0.0 - 1.0); <code>[2]</code> width of the bounds (0.0 - 1.0); <code>[3]</code> height of the bounds (0.0 - 1.0). The {{rightBounds}} MUST default to <code>[0.5, 0.0, 0.5, 1.0]</code>.
+-->
 
 
 ## VRDisplayCapabilities ## {#interface-vrdisplaycapabilities}
 
+{{VRDisplayCapabilities}} インターフェイスは {{VRDisplay}} の利用可能な機能を記述しています．これらはデバイス毎/ユーザ毎に静的なことが期待されてます．
+<!--
 The {{VRDisplayCapabilities}} interface describes the capabilities of a {{VRDisplay}}. These are expected to be static per-device/per-user.
+-->
 
 <pre class="idl">
 interface VRDisplayCapabilities {
@@ -246,21 +398,43 @@ interface VRDisplayCapabilities {
 ### Attributes ### {#vrdisplaycapabilities-attributes}
 
 <dfn attribute for="VRLayer">hasPosition</dfn>
+{{hasPosition}} 属性は {{VRDisplay}} が位置をトラッキング可能かどうかを返さなければなりません(MUST)．
+<!--
 The {{hasPosition}} attribute MUST return whether the {{VRDisplay}} is capable of tracking its position.
+-->
 
 <dfn attribute for="VRLayer">hasOrientation</dfn>
+{{hasOrientation}} 属性は {{VRDisplay}} が向きをトラッキング可能かどうかを返さなければなりません(MUST)．
+<!--
 The {{hasOrientation}} attribute MUST return whether the {{VRDisplay}} is capable of tracking its orientation.
+-->
 
 <dfn attribute for="VRLayer">hasExternalDisplay</dfn>
+{{hasExternalDisplay}} 属性は {{VRDisplay}} がデバイスのプライマリディスプレイとは分離しているかどうかを返さなければなりません(MUST)．
+表示している VR コンテンツがデバイスの他のコンテンツに隠されている場合，これはfalseになります．
+falseのとき，コンテンツは可視ではないため，アプリケーションはVRコンテンツがミラーされていたり，非VRなUIが更新されることを仮定してはいけません．
+<!--
 The {{hasExternalDisplay}} attribute MUST return whether the {{VRDisplay}} is separate from the device's primary display. If presenting VR content will obscure other content on the device, this should be false. When false, the application should not attempt to mirror VR content or update non-VR UI because that content will not be visible.
+-->
 
 <dfn attribute for="VRLayer">canPresent</dfn>
+{{canPresent}} 属性は {{VRDisplay}} がコンテンツをHMDまたは擬似デバイスへ表示可能か否かを返します(MUST)．
+6自由度トラッキング可能な"魔法のウィンドウ"デバイスを示すために使うことが可能ですが，その場合 {{VRDisplay}}.{{requestPresent()}} は意味がありません．
+もし false ならば {{VRDisplay}}.{{requestPresent()}} を呼び出すと常に失敗となり， {{VRDisplay}}.{{getEyeParameters()}} は NULL を返します．
+<!--
 The {{canPresent}} attribute MUST return whether the {{VRDisplay}} is capable of presenting content to an HMD or similar device. Can be used to indicate "magic window" devices that are capable of 6DoF tracking but for which {{VRDisplay}}.{{requestPresent()}} is not meaningful. If false then calls to {{VRDisplay}}.{{requestPresent()}} should always fail, and {{VRDisplay}}.{{getEyeParameters()}} should return NULL.
+-->
 
 <dfn attribute for="VRLayer">maxLayers</dfn>
+ {{requestPresent()}} が受け取れる最大の配列長を表します．{{canPresent}} が true ならば常に1で，それ以外は0となります (MUST)．
+<!--
 Indicates the maximum length of the array that {{requestPresent()}} will accept. MUST be 1 if {{canPresent}} is true, 0 otherwise.
+-->
 
+Note: 本仕様の将来的な版では，複数のレイヤーに対応し，もっと複雑なレンダリング効果（例えば，WebGLやDOM要素の合成など）が可能となるでしょう．今回の版では，そのような機能は許可されていません．
+<!--
 Note: Future revisions of this spec may allow multiple layers to enable more complex rendering effects such as compositing WebGL and DOM elements together. That functionality is not allowed by this revision of the spec.
+ -->
 
 
 ## VREye ## {#interface-vreye}
@@ -274,7 +448,10 @@ enum VREye {
 
 ## VRFieldOfView ## {#interface-interface-vrfieldofview}
 
-The {{VRFieldOfView}} interface represents a field of view, as given by 4 degrees describing the view from a center point.
+{{VRFieldOfView}} インターフェイスは，中心点からの4つの角度で記述される視野（Field of Vew）を表現します．
+<!--
+The {{VRFiledOfView}} interface represents a field of view, as given by 4 degrees describing the view from a center point.
+-->
 
 <pre class="idl">
 interface VRFieldOfView {
@@ -286,8 +463,11 @@ interface VRFieldOfView {
 </pre>
 
 <div class="example">
+次のコード断片は，{{VRFieldOfView}} からWebGL互換の投影行列を作成しています．
+<!--
 The following code snippet creates a WebGL-compatible projection matrix from a
 {{VRFieldOfView}}.
+-->
 
 <pre class="lang-js">
 function fieldOfViewToProjectionMatrix (fov, zNear, zFar) {
@@ -324,7 +504,10 @@ function fieldOfViewToProjectionMatrix (fov, zNear, zFar) {
 
 ## VRPose ## {#interface-vrpose}
 
+The VRPose インターフェイスは指定したタイムステップにおけるセンサーの状態を表します．
+<!--
 The VRPose interface represents a sensor's state at a given timestamp.
+ -->
 
 <pre class="idl">
 interface VRPose {
@@ -343,21 +526,42 @@ interface VRPose {
 ### Attributes ### {#vrpose-state-attributes}
 
 <dfn attribute for="VRPose">timestamp</dfn>
+ハードウェアから位置状態データが更新されたかを決定するのに使える単調増加する値．
+値は単調増加するので，更新の順序を決めるためにそれを比較できます．新しい値は常に古い値以上になります．
+<!--
 Monotonically increasing value that allows the author to determine if position
 state data been updated from the hardware. Since values are monotonically
 increasing, they can be compared to determine the ordering of updates, as newer
 values will always be greater than or equal to older values.
+ -->
 
 <dfn attribute for="VRPose">position</dfn>
+{{timestamp}} における {{VRDisplay}} の位置を表す3Dベクトルです．
+原点からの位置をメートル単位で与えられます．原点は，センサが最初に読み込んだ値あるいは {{restPose()}} を最後に呼出した時のセンサ位置のどちらかになります．
+座標系は次の3軸が使用されます:
+<!--
 Position of the {{VRDisplay}} at {{timestamp}} as a 3D vector. Position is given
 in meters from an origin point, which is either the position the sensor was
 first read at or the position of the sensor at the point that {{resetPose()}}
 was last called. The coordinate system uses these axis definitions:
+ -->
 
+* 正の X はユーザの右．
+* 正の Y は上．
+* 正の Z はユーザの後ろ．
+<!--
 * Positive X is to the user's right.
 * Positive Y is up.
 * Positive Z is behind the user.
+ -->
 
+すべての位置は座った空間内での一意の向きに対して与えられます．
+この点を{{VRStageParameters}}.{{sittingToStandingTransform}} でこの点を立っている空間へ座標変換します．
+センサーが位置データを利用できない場合は，おそらくNULLとなるでしょう(MAY)．
+ユーザエージェントはネックモデリングのようなテクニックでエミュレートした位置の値を提供する場合もあります(MAY)が，
+その場合 {{VRDisplayCapabilities}}.{{hasPosition}} は false としてレポートされなければなりません(SHOULD)．
+NULL出なければ，3要素の配列にしなければなりません(MUST)．
+<!--
 All positions are given relative to the identity orientation in sitting space.
 Transforming this point with {{VRStageParameters}}.{{sittingToStandingTransform}}</code>
 converts this to standing space. MAY be NULL if the sensor is incapable of
@@ -365,48 +569,85 @@ providing positional data. User agents MAY provide emulated position values
 through techniques such as neck modeling, but when doing so SHOULD report
 {{VRDisplayCapabilities}}.{{hasPosition}} as false. When not NULL MUST be a
 three-element array.
+ -->
 
 <dfn attribute for="VRPose">linearVelocity</dfn>
+{{timestamp}} におけるセンサの線形の速度（メートル/秒）です．
+センサが線形速度を利用できない場合はおそらくNULLになります(MAY)．
+NULLではない場合は3要素の配列となります(MUST)．
+<!--
 Linear velocity of the sensor at {{timestamp}} meters per second. MAY be NULL if
 the sensor is incapable of providing linear velocity. When not NULL MUST be a
 three-element array.
+ -->
 
 <dfn attribute for="VRPose">linearAcceleration</dfn>
+{{timestamp}} におけるセンサの線形の加速度（メートル/秒）です．
+センサが線形加速度を利用できない場合はおそらくNULLになります(MAY)．
+NULLではない場合は3要素の配列となります(MUST)．
+<!--
 Linear acceleration of the sensor at {{timestamp}} given in meters per second.
 MAY be NULL if the sensor is incapable of providing linear acceleration. When
 not NULL MUST be a three-element array.
+ -->
 
 <dfn attribute for="VRPose">orientation</dfn>
+{{timestamp}} におけるセンサの向きをクォータニオンとして表します．
+向きのヨー(Y軸周りの回転)は，センサ起動時の初期値または最後に {{resetPose()}} が呼び出された時のヨー値からの相対的な値です．
+ {x: 0, y: 0, z: 0, w: 1} の向きは，"前方" と仮定されています．
+センサが向きデータを利用できない場合はおそらくNULLになります(MAY)．
+NULLではない場合は4要素の配列となります(MUST)．
+<!--
 Orientation of the sensor at {{timestamp}} as a quaternion. The orientation yaw
 (rotation around the Y axis) is relative to the initial yaw of the sensor when
 it was first read or the yaw of the sensor at the point that {{resetPose()}} was
 last called. An orientation of {x: 0, y: 0, z: 0, w: 1} is considered to be
 "forward." MAY be NULL if the sensor is incapable of providing orientation data.
 When not NULL MUST be a four-element array.
+ -->
 
 <dfn attribute for="VRPose">angularVelocity</dfn>
+{{timestamp}} におけるセンサの角速度(ラジアン/秒)です．
+センサが角速度を利用できない場合はおそらくNULLになります(MAY)．
+NULLではない場合は3要素の配列となります(MUST)．
+<!--
 Angular velocity of the sensor at {{timestamp}} given in radians per second. MAY
 be NULL if the sensor is incapable of providing angular velocity. When not NULL
 MUST be a three-element array.
+ -->
 
 <dfn attribute for="VRPose">angularAcceleration</dfn>
+{{timestamp}} におけるセンサの角加速度(ラジアン/秒)です．
+センサが角加速度を利用できない場合はおそらくNULLになります(MAY)．
+NULLではない場合は3要素の配列となります(MUST)．
+<!--
 Angular acceleration of the sensor at {{timestamp}} given in radians per second.
 MAY be NULL if the sensor is incapable of providing angular acceleration. When
 not NULL MUST be a three-element array.
+ -->
 
 <div class="example">
+{{VRPose}} からWebGL互換の行列を作成するコードスニペットです:
+<!--
 The following code snippet creates a WebGL-compatible matrix from a
 {{VRPose}}:
+ -->
 
 <pre class="lang-js">
 function poseToMatrix (pose) {
     var out = new Float32Array(16);
 
+    // orientation または position が NULL ならデフォルト値を与えます．
+    <!--
     // If the orientation or position are NULL, provide defaults.
+     -->
     var q = pose.orientation ? pose.orientation : [0, 0, 0, 1];
     var v = pose.position ? pose.position : [0, 0, 0];
 
+    // クォータニオンでいくつかの値を計算
+    <!--
     // Compute some values for the quaternion math.
+     -->
     var x2 = q[0] + q[0];
     var y2 = q[1] + q[1];
     var z2 = q[2] + q[2];
@@ -446,7 +687,10 @@ function poseToMatrix (pose) {
 
 ## VREyeParameters ## {#interface-vreyeparameters}
 
+{{VREyeParameters}} インターフェイスは，指定のeye用のシーンを正しくレンダリングするために必要なすべての情報を表現します．
+<!--
 The {{VREyeParameters}} interface represents all the information required to correctly render a scene for a given eye.
+ -->
 
 <pre class="idl">
 interface VREyeParameters {
@@ -462,19 +706,42 @@ interface VREyeParameters {
 ### Attributes ### {#vreyeparameters-attributes}
 
 <dfn attribute for="VREyeParameters">offset</dfn>
+ユーザの両眼の中心から指定した眼までのオフセット量(メートル)です．
+この値は瞳孔間距離(IPD)の半分を表さなければなりません(SHOULD)が，指定した眼側のレンズ中心とヘッドセットの中心の距離になっている可能性もあります．
+左目用の値は負の値，右目は正の値でなければなりません(MUST)．
+<!--
 Offset from the center point between the users eyes to the center of the eye in meters. This value SHOULD represent half of the user's interpupillary distance (IPD), but MAY also represent the distance from the center point of the headset to the center point of the lens for the given eye. Values for the left eye MUST be negative; values for the right eye MUST be positive.
+ -->
 
 <dfn attribute for="VREyeParameters">fieldOfView</dfn>
+指定した眼の現在の視野角(FOV; field of view)です．ユーザが調整したヘッドセットIPDによって変化します．
+<!--
 The current field of view for the eye, as the user adjusts her headset IPD.
+ -->
 
 <dfn attribute for="VREyeParameters">renderWidth</dfn>
+それぞれの眼のビューポートの推奨されるレンダーターゲット幅をピクセル単位で示します．
+複数の眼が単一のレンダーターゲット内でレンダリングされる場合は，そのレンダーターゲットは両方のビューポートをフィットさせるのに十分な大きさを持って作成されるべきです．
+左右の眼の{{renderWidth}} は決してオーバーラップさせてはならず(MUST NOT)，右目の {{renderWidth}} は左目の {{renderWidth}} の右側になければなりません(MUST)．
+<!--
 Describes the recommended render target width of each eye viewport, in pixels. If multiple eyes are rendered in a single render target, then the render target should be made large enough to fit both viewports. The {{renderWidth}} for the left eye and right eye MUST NOT overlap, and the {{renderWidth}} for the right eye MUST be to the right of the {{renderWidth}} for the left eye.
+ -->
 
 <dfn attribute for="VREyeParameters">renderHeight</dfn>
+それぞれの眼のビューポートの推奨されるレンダーターゲット高さをピクセル単位で示します．
+複数の眼が単一のレンダーターゲット内でレンダリングされる場合は，そのレンダーターゲットは両方のビューポートをフィットさせるのに十分な大きさを持って作成されるべきです．
+左右の眼の{{renderWidth}} は決してオーバーラップさせてはならず(MUST NOT)，右目の {{renderWidth}} は左目の {{renderWidth}} の右側になければなりません(MUST)．
+<!--
 Describes the recommended render target height of each eye viewport, in pixels. If multiple eyes are rendered in a single render target, then the render target should be made large enough to fit both viewports. The {{renderWidth}} for the left eye and right eye MUST NOT overlap, and the {{renderWidth}} for the right eye MUST be to the right of the {{renderWidth}} for the left eye.
+ -->
 
 <div class="example">
+多くのHMDは，ヘッドセットの光学系によって導かれる望ましくない影響を中和するために，レンダリング画像をゆがませています．
+このため，ユーザに表示される最終的な画像がユーザのビュー中心におけるピクセル比率が1:1になることを保証するために，canvasの最適な解像度は，通常，HMDの物理的な解像度よりも大きくなります．
+最適なcanvas解像度は，両目の {{renderWidth}} と {{renderHeight}} から次のように計算できます:
+<!--
 Many HMDs will distort the rendered image to counteract undesired effects introduced by the headset optics. Because of this the optimal resolution of the canvas will often be larger than the HMD's physical resolution to ensure that the final image presented to the user has a 1:1 pixel ratio at the center of the user's view. The optimal canvas resolution can be calculated from the {{renderWidth}} and {{renderHeight}} for both eyes as follows:
+ -->
 
 <pre class="lang-js">
 var leftEye = vrDisplay.getEyeParameters("left");
@@ -488,7 +755,10 @@ canvas.height = Math.max(leftEye.renderHeight, rightEye.renderHeight);
 
 ## VRStageParameters ## {#interface-vrstageparameters}
 
+{{VRStageParameters}} インターフェイスは，ルームスケール体験をサポートしているデバイス用のステージ/プレイ領域を示す値です．
+<!--
 The {{VRStageParameters}} interface represents the values describing the the stage/play area for devices that support room-scale experiences.
+ -->
 
 <pre class="idl">
 interface VRStageParameters {
@@ -502,16 +772,33 @@ interface VRStageParameters {
 ### Attributes ### {#vrstageparameters-attributes}
 
 <dfn attribute for="VREyeParameters">sittingToStandingTransform</dfn>
+{{sittingToStandingTransform}} 属性は，4x4の変換行列からなる16要素の配列です．
+この行列は，{{getPose()}}/{{getImmediatePose()}} によって返される着座姿勢空間の位置を立ち姿勢の位置へ変換します．
+<!--
 The {{sittingToStandingTransform}} attribute is a 16-element array containing the components of a 4×4 transform matrix. This matrix transforms the sitting-space position returned by {{getPose()}}/{{getImmediatePose()}} to a standing-space position.
+ -->
 
 <dfn attribute for="VREyeParameters">sizeX</dfn>
+プレイ領域の境界の幅をメートル単位で表します．
+境界は，床上の軸に沿った(axis-aligned)矩形として定義されます．
+矩形の中心は立ち姿勢の座標系の (0,0,0) です．
+これらの境界は，安全を目的として決められています．
+コンテンツはユーザがこの境界超えて移動するようなことをしてはいけません； しかし，ユーザは境界を無視してこの矩形の外側に行くことも可能です．
+<!--
 Width of the play-area bounds in meters. The bounds are defined as an axis-aligned rectangle on the floor. The center of the rectangle is at (0,0,0) in standing-space coordinates. These bounds are defined for safety purposes. Content should not require the user to move beyond these bounds; however, it is possible for the user to ignore the bounds resulting in position values outside of this rectangle.
+ -->
 
 <dfn attribute for="VREyeParameters">sizeZ</dfn>
+プレイ領域の境界の奥行きをメートル単位で表します．
+境界は，床上の軸に沿った(axis-aligned)矩形として定義されます．
+矩形の中心は立ち姿勢の座標系の (0,0,0) です．
+これらの境界は，安全を目的として決められています．
+コンテンツはユーザがこの境界超えて移動するようなことをしてはいけません； しかし，ユーザは境界を無視してこの矩形の外側に行くことも可能です．
+<!--
 Depth of the play-area bounds in meters. The bounds are defined as an axis-aligned rectangle on the floor. The center of the rectangle is at (0,0,0) in standing-space coordinates. These bounds are defined for safety purposes. Content should not require the user to move beyond these bounds; however, it is possible for the user to ignore the bounds resulting in position values outside of this rectangle.
+ -->
 
-
-## Navigator Interface extension ## {#interface-navigator}
+## Navigator インターフェイスの拡張 Navigator Interface extension ## {#interface-navigator}
 
 <pre class="idl">
 partial interface Navigator {
@@ -523,21 +810,35 @@ partial interface Navigator {
 ### Attributes ### {#navigator-attributes}
 
 <dfn method for="Navigator" id="navigator-getvrdisplays-attribute">getVRDisplays()</dfn>
+利用可能な {{VRDisplay}} のリストを決定するためのPromiseを返します．
+アプリケーションは，デバイスのフル機能を使うために，このリストを繰り返し処理して，{{displayId}} が共通しているデバイスを関連付けするべきです．
+<!--
 Return a Promise which resolves to a list of available {{VRDisplay}}s. Applications should iterate over the list and correlate devices that share {{displayId}}s to access the full capabilities of a device.
+ -->
 
 <dfn attribute for="Navigator" id="navigator-activevrdisplays-attribute">activeVRDisplays</dfn>
+{{activeVRDisplays}} は，現在，表示状態のすべての {{VRDisplay}} 含んでいます．
+<!--
 {{activeVRDisplays}} includes every {{VRDisplay}} that is currently presenting.
+ -->
 
 <div class="example">
+次のコードは利用可能な最初の {{VRDisplay}} を見つけます．
+<!--
 The following code finds the first available {{VRDisplay}}.
+ -->
 
 <pre class="lang-js">
 var vrDisplay;
 
 navigator.getVRDisplays().then(function (displays) {
+  // リストからそれが利用可能であれば最初のディスプレイを使います．
+  // 複数のディスプレイがある場合は，あなたはユーザに利用するディスプレイを選択させることも可能です．
+  <!--
   // Use the first display in the array if one is available. If multiple
   // displays are present, you may want to present the user with a way to
   // select which display to use.
+   -->
   if (displays.length > 0) {
     vrDisplay = displays[0];
   }
@@ -546,7 +847,7 @@ navigator.getVRDisplays().then(function (displays) {
 </div>
 
 
-## Window Interface extension ## {#interface-window}
+## ウィンドウインターフェイスの拡張 Window Interface extension ## {#interface-window}
 
 <pre class="idl">
 partial interface Window {
@@ -557,7 +858,7 @@ partial interface Window {
 </pre>
 
 
-## Gamepad Interface extension ## {#interface-gamepad}
+## Gamepad インターフェイスの拡張 Gamepad Interface extension ## {#interface-gamepad}
 
 <pre class="idl">
 partial interface Gamepad {
@@ -568,13 +869,31 @@ partial interface Gamepad {
 ### Attributes ### {#gamepad-attributes}
 
 <dfn attribute for="Gamepad" id="gamepad-getvrdisplays-attribute">displayId</dfn>
+ {{VRDisplay}} に紐付いた {{displayId}} を返します.
+<!--
 Return the {{displayId}} for the associated {{VRDisplay}}.
+-->
 
+# セキュリティの考慮 Security Considerations # {#security}
 
-# Security Considerations # {#security}
-
+API インターフェイスとWeb IDLには直接影響しませんが，セキュリティモデルはユーザの期待するWeb上のプライバシーを維持しなければなりません．
+<!--
 While not directly affecting the API interface and Web IDL, the security model should maintains the user's expectations of privacy on the Web:
+ -->
 
+* Gamepad API は，そのゲームパッド入力とHMDポーズがフォーカス中のタブだけで利用できるように更新されるでしょう．
+  * フォーカス外のタブは{{Gamepad}} と {{VRDisplay}} を列挙することは可能ですが，最後に受けとった状態あるいはデフォルト状態のままに見えるでしょう．
+  * すべてのゲームパッドはフォーカス中のタブによって所有されていると仮定されるので，それらをパスワードフィールドのようなセキュアな入力に使うことができます．
+* ブラウザによって表示される信頼性のあるUI要素は，信頼できないコンテンツに露出した {{VRDisplay}} に関連するGLコンテキストからはアクセスできません．
+* 信頼性あるUIはchromeのみがレンダリングし，JavaScriptは独立したGLコンテキストを持ちます．
+* "VR Compositor" はコンテンツから非同期に動作し，信頼性のあるコンテンツと信頼性のないコンテンツの合成に関して責任を持ちます．コンテンツが実行しないあるいはフレームを提示しないならば，ブラウザはレスポンシブなフロントエンドを表示し続けることが可能であるべきです．
+* コンテンツの処理が予期せず終了するときのイベント内で，ブラウザはVRモードを終了しないでしょう．VR compositor は信頼できるブラウザのUI要素を表示し続けている間にコンテンツレイヤを破棄するでしょう．
+* HMDポーズとその他のVR入力はフォーカス中のWebVRページ用にだけ更新されます．これはキーボードとマウスの入力と同様の方法で実装することができます．
+* コンテンツはVR HMD表示のためにユーザパーミッションを要求する必要はありません; しかし，ブラウザによって表示されるUIは通常2Dページコンテンツ用ですが，VRサイトを信頼して訪れることをユーザが望むことを保証するために，ページのロードやリンク移動時にはHMD内に表示されるでしょう．
+* ユーザがVR世界内で気持ち悪くなったとしても，ユーザは視野全体が覆われているためディスプレイから目をそらすことができません．代わりにユーザは目を閉じて，デフォルトページヘ逃げるために視覚を必要としないアクションを実行します（例えば，予約されたボタンやモーションコントロールでジェスチャを実行する）．
+* CORS関連の脆弱性を防止するため，各ページはWebVR APIによって返されたオブジェクト(例えば {{VRDisplay}} )の独立したインスタンスを見るでしょう．あるページでセットされた属性（例： {{VRLayer}}.{{source}} ）が他から読めないことを保証することに気をつけなければなりません．
+
+<!--
 * The Gamepad API will be updated such that the gamepad inputs and HMD pose are available to only the focused tab.
   * Non-focused tabs are allowed to enumerate {{Gamepad}}s and {{VRDisplay}}s but will see last received state or default values.
   * All gamepads are assumed to be owned by the focused tabs, so can use them for secure inputs such as password fields.
@@ -586,6 +905,6 @@ While not directly affecting the API interface and Web IDL, the security model s
 * Content does not need to request user permission to present to the VR HMD; however, any UI presented normally by the browser for 2D page content while loading a page or following links will be presented within the HMD to ensure that the user wishes to trust and visit the VR site.
 * If the user is uncomfortable in a VR world, she cannot look away from the display as it occupies her entire field of view. Instead the user is instructed to close her eyes and perform an action that does not require her vision to escape to a default page (such as pressing a reserved button or performing a gesture with motion controls).
 * To prevent CORS-related vulnerabilities, each page will see an independent instance of objects returned by the WebVR API, such as {{VRDisplay}}. Care must be taken to ensure that attributes such as {{VRLayer}}.{{source}} set by one page can not be read by another.
+ -->
 
-
-# Acknowledgements # {#ack}
+# 謝辞 Acknowledgements # {#ack}
